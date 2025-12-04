@@ -53,7 +53,7 @@ fn main() {
     let start_time: Instant = Instant::now();
 
     if cli.recursive && cli.input_path.is_dir() {
-        process_directory(&cli, None);
+        process_directory(&cli);
     } else {
         process_single_file(&cli);
     }
@@ -78,15 +78,27 @@ fn process_single_file(cli: &Cli) {
     let extension: &str = input_file
         .extension()
         .and_then(|s| s.to_str())
-        .unwrap_or("jpeg");
+        .unwrap_or("jpg");
 
     if extension.to_lowercase() == "pdf" {
         process_pdf(cli);
         return;
     }
 
-    let new_name: String = format!("{}_watermarked.{}", file_stem, extension);
-    let output_file: PathBuf = input_file.with_file_name(new_name);
+    let output_file: &PathBuf = match cli.output_path {
+        Some(ref output_path) => {
+            if output_path.is_dir() {
+                let new_name: String = format!("{}.{}", file_stem, extension);
+                &output_path.join(new_name)
+            } else {
+                &output_path
+            }
+        }
+        None => {
+            let new_name: String = format!("{}_watermarked.{}", file_stem, extension);
+            &input_file.with_file_name(new_name)
+        }
+    };
 
     println!(
         "{}",
@@ -96,7 +108,7 @@ fn process_single_file(cli: &Cli) {
     if let Err(e) = add_watermark(
         input_file,
         &cli.watermark,
-        &output_file,
+        output_file,
         &cli.compression,
         &cli.text_scale,
         &cli.space_scale,
@@ -134,27 +146,22 @@ fn process_pdf(cli: &Cli) {
 
     convert_to_image(input_file, &temp_dir);
 
-    let mut output_dir: PathBuf = cli.input_path.parent().unwrap().to_path_buf();
-    output_dir.push(cli.input_path.file_stem().unwrap());
-    fs::create_dir_all(&output_dir).unwrap();
-
-    process_directory(
-        &Cli {
-            input_path: temp_dir.clone(),
-            watermark: cli.watermark.clone(),
-            compression: cli.compression,
-            space_scale: cli.space_scale,
-            text_scale: cli.text_scale,
-            recursive: cli.recursive,
-            pattern: cli.pattern.clone(),
-            text_color: cli.text_color,
-        },
-        Some(output_dir.as_path()),
-    );
+    process_directory(&Cli {
+        input_path: temp_dir.clone(),
+        watermark: cli.watermark.clone(),
+        compression: cli.compression,
+        space_scale: cli.space_scale,
+        text_scale: cli.text_scale,
+        recursive: cli.recursive,
+        pattern: cli.pattern.clone(),
+        text_color: cli.text_color,
+        output_path: cli.output_path.clone(),
+    });
 
     fs::remove_dir_all(&temp_dir).unwrap();
 }
-fn process_directory(cli: &Cli, output_dir: Option<&Path>) {
+
+fn process_directory(cli: &Cli) {
     let files: Vec<PathBuf> = collect_image_files(&cli.input_path);
     let total_files: usize = files.len();
 
@@ -163,7 +170,7 @@ fn process_directory(cli: &Cli, output_dir: Option<&Path>) {
         format!("Processing {} images found", total_files).blue()
     );
 
-    if let Some(dir) = output_dir {
+    if let Some(dir) = &cli.output_path {
         fs::create_dir_all(dir).unwrap();
     }
 
@@ -180,13 +187,14 @@ fn process_directory(cli: &Cli, output_dir: Option<&Path>) {
             .file_stem()
             .and_then(|s| s.to_str())
             .unwrap_or("output");
-        let extension: &str = file.extension().and_then(|s| s.to_str()).unwrap_or("jpeg");
+        let extension: &str = file.extension().and_then(|s| s.to_str()).unwrap_or("jpg");
 
-        let new_name: String = format!("{}_watermark.{}", file_stem, extension);
-        let output_file: PathBuf = if let Some(dir) = output_dir {
-            dir.join(new_name)
-        } else {
-            file.with_file_name(new_name)
+        let output_file: PathBuf = match cli.output_path {
+            Some(ref dir) => dir.join(format!("{}.{}", file_stem, extension)),
+            None => {
+                let new_name: String = format!("{}_watermarked.{}", file_stem, extension);
+                file.with_file_name(new_name)
+            }
         };
 
         if let Err(e) = add_watermark(

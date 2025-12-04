@@ -76,6 +76,10 @@ pub struct Cli {
 
     #[arg(short = 'c', long, value_parser = parse_rgba, default_value = "255,255,255,64")]
     pub text_color: [u8; 4],
+
+    /// Output image file/directory
+    #[arg(value_hint = clap::ValueHint::FilePath, short, long)]
+    pub output_path: Option<PathBuf>,
 }
 
 #[derive(Debug, Clone, clap::ValueEnum)]
