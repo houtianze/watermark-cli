@@ -3,6 +3,10 @@
 A command-line tool for adding watermarks to images and PDFs with support for batch processing and various watermark patterns.
 Designed to prevent identity theft and unauthorized copying of official documents through visible watermarking.
 
+## Fork
+
+- This fork adds color and opacity support
+
 ---
 
 ## Features

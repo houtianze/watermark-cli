@@ -73,6 +73,9 @@ pub struct Cli {
     /// Pattern of watermark
     #[arg(short, long, default_value = "diagonal")]
     pub pattern: Pattern,
+
+    #[arg(short = 'c', long, value_parser = parse_rgba, default_value = "255,255,255,64")]
+    pub text_color: [u8; 4],
 }
 
 #[derive(Debug, Clone, clap::ValueEnum)]
@@ -89,15 +92,44 @@ pub enum Pattern {
 struct Tag {
     name: String,
 }
+
+fn parse_rgba(value: &str) -> Result<[u8; 4], String> {
+    let mut components: Vec<&str> = value.split(',').collect();
+    if components.len() < 3 || components.len() > 4 {
+        return Err(
+            "Text color must have 3 or 4 components (R,G,B,A, with alpha being optional)"
+                .to_string(),
+        );
+    }
+    if components.len() == 3 {
+        components.push("64");
+    }
+    let parsed_components: Vec<u8> = components
+        .iter()
+        .map(|&component| {
+            component
+                .parse::<u8>()
+                .map_err(|_| format!("Invalid value for RGBA component: {}", component))
+        })
+        .collect::<Result<_, _>>()?;
+    Ok([
+        parsed_components[0],
+        parsed_components[1],
+        parsed_components[2],
+        parsed_components[3],
+    ])
+}
+
+/// Text color in RGBA format (e.g., "255,255,255,255" for white)
 #[cfg(feature = "auto-update")]
 pub fn check_update() {
-    let config_file = std::env::home_dir().unwrap_or_default().join(".watermark-cli");
+    let config_file = std::env::home_dir()
+        .unwrap_or_default()
+        .join(".watermark-cli");
     if !config_file.exists() {
         println!("Would you like to enable automatic update checks? [Y/n]");
         let mut input = String::new();
-        std::io::stdin()
-            .read_line(&mut input)
-            .unwrap_or_default();
+        std::io::stdin().read_line(&mut input).unwrap_or_default();
         let enable_updates = input.trim().to_lowercase() != "n";
         fs::write(&config_file, if enable_updates { "1" } else { "0" }).unwrap_or_default();
     }
@@ -106,16 +138,21 @@ pub fn check_update() {
         let current = env!("CARGO_PKG_VERSION");
 
         match reqwest::blocking::Client::new()
-            .get("https://api.github.com/repos/chianti-ga/watermark-cli/tags")
-            .header(reqwest::header::USER_AGENT, format!("watermark-cli/{}", current))
+            .get("https://api.github.com/repos/houtianze/watermark-cli/tags")
+            .header(
+                reqwest::header::USER_AGENT,
+                format!("watermark-cli/{}", current),
+            )
             .send()
             .and_then(|response| response.json::<Vec<Tag>>())
         {
             Ok(tags) => {
                 if let Some(latest_tag) = tags.first() {
                     if latest_tag.name != format!("v{current}") {
-                        println!("🎉 New version {} available! (Current version: v{})",
-                                 latest_tag.name, current);
+                        println!(
+                            "🎉 New version {} available! (Current version: v{})",
+                            latest_tag.name, current
+                        );
                     }
                 }
             }
