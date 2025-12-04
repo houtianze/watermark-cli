@@ -25,14 +25,15 @@ use crate::pdf::convert_to_image;
 use ab_glyph::FontRef;
 use clap::Parser;
 use colored::Colorize;
-use image::{DynamicImage, ImageBuffer, Rgba};
 use imageproc::drawing::draw_text_mut;
 use imageproc::geometric_transformations::{Interpolation, rotate};
-use imageproc::image;
+use imageproc::image::ImageDecoder;
+use imageproc::image::ImageReader;
 use imageproc::image::codecs::jpeg::JpegEncoder;
 use imageproc::image::codecs::png::PngEncoder;
 use imageproc::image::codecs::webp::WebPEncoder;
 use imageproc::image::imageops::overlay;
+use imageproc::image::{DynamicImage, ImageBuffer, Rgba};
 use indicatif::{ProgressBar, ProgressStyle};
 use log::{error, info};
 use rayon::iter::IntoParallelRefIterator;
@@ -250,7 +251,12 @@ fn add_watermark(
     space_scale: &f32,
     text_color: &[u8; 4],
 ) -> Result<(), Box<dyn Error>> {
-    let mut img: DynamicImage = image::open(image_path)?;
+    // https://alexwlchan.net/2025/create-thumbnail-is-exif-aware/
+    // let mut img: DynamicImage = image::open(image_path)?;
+    let mut decoder = ImageReader::open(image_path)?.into_decoder()?;
+    let orientation = decoder.orientation()?;
+    let mut img = DynamicImage::from_decoder(decoder)?;
+    img.apply_orientation(orientation);
     let img_height: u32 = img.height();
     let img_width: u32 = img.width();
 
