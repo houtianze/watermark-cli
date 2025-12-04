@@ -74,7 +74,7 @@ pub struct Cli {
     #[arg(short, long, default_value = "diagonal")]
     pub pattern: Pattern,
 
-    #[arg(short = 'c', long, value_parser = parse_rgba, default_value = "255,255,255,64")]
+    #[arg(short = 'c', long, value_parser = parse_rgba, default_value = "255,255,255,96")]
     pub text_color: [u8; 4],
 
     /// Output image file/directory
@@ -124,7 +124,6 @@ fn parse_rgba(value: &str) -> Result<[u8; 4], String> {
     ])
 }
 
-/// Text color in RGBA format (e.g., "255,255,255,255" for white)
 #[cfg(feature = "auto-update")]
 pub fn check_update() {
     let config_file = std::env::home_dir()
