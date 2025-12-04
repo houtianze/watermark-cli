@@ -24,7 +24,7 @@ A command-line tool for adding watermarks to images with support for batch proce
 Designed to prevent identity theft and unauthorized copying of official documents through visible watermarking.
 
 
-Copyright (C) 2025 Chianti GALLY
+Copyright (C) 2025 Chianti GALLY (modified by HOU Tianze)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
