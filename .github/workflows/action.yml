@@ -27,7 +27,7 @@ jobs:
           gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
           binutils-aarch64-linux-gnu \
           libc6-dev-arm64-cross \
-          libopenjp2-dev
+          libopenjp2-7-dev
 
       - name: Build Binaries
         run: |
