@@ -9,54 +9,66 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
+# https://github.com/marketplace/actions/build-rust-projects-with-cross
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  release:
+    name: Release - ${{ matrix.platform.os-name }}
+    strategy:
+      matrix:
+        platform:
+          - os-name: FreeBSD-x86_64
+            runs-on: ubuntu-24.04
+            target: x86_64-unknown-freebsd
+            command-to-run: pkg install openssl
+
+          - os-name: Linux-x86_64
+            runs-on: ubuntu-24.04
+            target: x86_64-unknown-linux-musl
+            command-to-run: sudo apt-get install libssl-dev pkg-config
+
+          - os-name: Linux-aarch64
+            runs-on: ubuntu-24.04
+            target: aarch64-unknown-linux-musl
+            command-to-run: sudo apt-get install libssl-dev pkg-config
+
+          - os-name: Linux-riscv64
+            runs-on: ubuntu-24.04
+            target: riscv64gc-unknown-linux-gnu
+            command-to-run: sudo apt-get install libssl-dev pkg-config
+
+          - os-name: Windows-x86_64
+            runs-on: windows-latest
+            target: x86_64-pc-windows-msvc
+            command-to-run: choco install openssl
+
+          - os-name: macOS-x86_64
+            runs-on: macOS-latest
+            target: x86_64-apple-darwin
+            command-to-run: brew install openssl
+
+          # more targets here ...
+
+    runs-on: ${{ matrix.platform.runs-on }}
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Rust targets
-        run: |
-          rustup target add x86_64-pc-windows-gnu
-          # rustup target add aarch64-unknown-linux-gnu
-
-      - name: Install cross-compilation tools
-        run: |
-          # sudo dpkg --add-architecture aarch64
-          sudo apt-get update
-          sudo apt-get install -y mingw-w64
-          # gcc-aarch64-linux-gnu \
-          # g++-aarch64-linux-gnu \
-          # binutils-aarch64-linux-gnu \
-          # libc6-dev-arm64-cross \
-          # libopenjp2-7-dev \
-          # libopenjp2-7-dev:arm64
-
-      - name: Build Binaries
-        run: |
-          # cargo build --release --target aarch64-unknown-linux-gnu --features static_ssl
-          cargo build --release --target x86_64-unknown-linux-gnu
-          cargo build --release --target x86_64-pc-windows-gnu
-
-      - name: Collect Binaries
-        run: |
-          # mkdir -p binaries/aarch64
-          mkdir -p binaries/x86_64
-          # cp target/aarch64-unknown-linux-gnu/release/watermark-cli binaries/aarch64/watermark-cli || echo "Linux aarch64 binary not found"
-          cp target/x86_64-unknown-linux-gnu/release/watermark-cli binaries/x86_64/watermark-cli || echo "Linux x86_64 binary not found"
-          cp target/x86_64-pc-windows-gnu/release/watermark-cli.exe binaries/x86_64/watermark-cli.exe || echo "Windows binary not found"
-
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+      # - name: Install dependencies
+      #   run: |
+      #     ${{ matrix.platform.command-to-run }}
+      - name: Build binary
+        uses: houseabsolute/actions-rust-cross@v1
         with:
-          name: binaries-cross-compiled
-          path: binaries/
-
-      - name: Release
-        uses: softprops/action-gh-release@v2
-        if: github.ref_type == 'tag'
+          command: build
+          target: ${{ matrix.platform.target }}
+          args: "--release --features static_ssl"
+          strip: true
+      - name: Publish artifacts and release
+        uses: houseabsolute/actions-rust-release@v0
         with:
-          files: binaries/*
+          executable-name: ubi
+          target: ${{ matrix.platform.target }}
+
+# Old acton file ----
 # on:
 #   push:
 #     branches: ["master"]
@@ -66,61 +78,51 @@ jobs:
 # env:
 #   CARGO_TERM_COLOR: always
 
-# # https://github.com/marketplace/actions/build-rust-projects-with-cross
 # jobs:
-#   release:
-#     name: Release - ${{ matrix.platform.os-name }}
-#     strategy:
-#       matrix:
-#         platform:
-#           - os-name: FreeBSD-x86_64
-#             runs-on: ubuntu-24.04
-#             target: x86_64-unknown-freebsd
-#             command-to-run: pkg install openssl
-
-#           - os-name: Linux-x86_64
-#             runs-on: ubuntu-24.04
-#             target: x86_64-unknown-linux-musl
-#             command-to-run: sudo apt-get install libssl-dev pkg-config
-
-#           - os-name: Linux-aarch64
-#             runs-on: ubuntu-24.04
-#             target: aarch64-unknown-linux-musl
-#             command-to-run: sudo apt-get install libssl-dev pkg-config
-
-#           - os-name: Linux-riscv64
-#             runs-on: ubuntu-24.04
-#             target: riscv64gc-unknown-linux-gnu
-#             command-to-run: sudo apt-get install libssl-dev pkg-config
-
-#           - os-name: Windows-x86_64
-#             runs-on: windows-latest
-#             target: x86_64-pc-windows-msvc
-#             command-to-run: choco install openssl
-
-#           - os-name: macOS-x86_64
-#             runs-on: macOS-latest
-#             target: x86_64-apple-darwin
-#             command-to-run: brew install openssl
-
-#           # more targets here ...
-
-#     runs-on: ${{ matrix.platform.runs-on }}
+#   build:
+#     runs-on: ubuntu-latest
 #     steps:
-#       - name: Checkout
-#         uses: actions/checkout@v4
-#       - name: Install dependencies
+#       - uses: actions/checkout@v4
+
+#       - name: Install Rust targets
 #         run: |
-#           ${{ matrix.platform.command-to-run }}
-#       - name: Build binary
-#         uses: houseabsolute/actions-rust-cross@v1
+#           rustup target add x86_64-pc-windows-gnu
+#           # rustup target add aarch64-unknown-linux-gnu
+
+#       - name: Install cross-compilation tools
+#         run: |
+#           # sudo dpkg --add-architecture aarch64
+#           sudo apt-get update
+#           sudo apt-get install -y mingw-w64
+#           # gcc-aarch64-linux-gnu \
+#           # g++-aarch64-linux-gnu \
+#           # binutils-aarch64-linux-gnu \
+#           # libc6-dev-arm64-cross \
+#           # libopenjp2-7-dev \
+#           # libopenjp2-7-dev:arm64
+
+#       - name: Build Binaries
+#         run: |
+#           # cargo build --release --target aarch64-unknown-linux-gnu --features static_ssl
+#           cargo build --release --target x86_64-unknown-linux-gnu
+#           cargo build --release --target x86_64-pc-windows-gnu
+
+#       - name: Collect Binaries
+#         run: |
+#           # mkdir -p binaries/aarch64
+#           mkdir -p binaries/x86_64
+#           # cp target/aarch64-unknown-linux-gnu/release/watermark-cli binaries/aarch64/watermark-cli || echo "Linux aarch64 binary not found"
+#           cp target/x86_64-unknown-linux-gnu/release/watermark-cli binaries/x86_64/watermark-cli || echo "Linux x86_64 binary not found"
+#           cp target/x86_64-pc-windows-gnu/release/watermark-cli.exe binaries/x86_64/watermark-cli.exe || echo "Windows binary not found"
+
+#       - name: Upload Artifacts
+#         uses: actions/upload-artifact@v4
 #         with:
-#           command: build
-#           target: ${{ matrix.platform.target }}
-#           args: "--release"
-#           strip: true
-#       - name: Publish artifacts and release
-#         uses: houseabsolute/actions-rust-release@v0
+#           name: binaries-cross-compiled
+#           path: binaries/
+
+#       - name: Release
+#         uses: softprops/action-gh-release@v2
+#         if: github.ref_type == 'tag'
 #         with:
-#           executable-name: ubi
-#           target: ${{ matrix.platform.target }}
+#           files: binaries/*
