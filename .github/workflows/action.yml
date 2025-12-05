@@ -65,9 +65,8 @@ jobs:
       - name: Publish artifacts and release
         uses: houseabsolute/actions-rust-release@v0
         with:
-          executable-name: ubi
+          executable-name: watermark-cli
           target: ${{ matrix.platform.target }}
-
 # Old acton file ----
 # on:
 #   push:
