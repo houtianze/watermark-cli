@@ -7,7 +7,7 @@ Designed to prevent identity theft and unauthorized copying of official document
 
 - Adds color and opacity support
 - Correctly loads image files with rotation/orientation information in metadata (exif)
-- Cross compile to multiple platforms with binaries easily accessible from [GitHub Releases](https://github.com/chianti-ga/watermark-cli/releases)
+- Cross compile to multiple platforms with binaries easily accessible from [GitHub Releases](https://github.com/houtianze/watermark-cli/releases)
 
 ---
 
