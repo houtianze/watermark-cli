@@ -2,9 +2,14 @@ name: Rust Cross-Compile and Publish
 
 on:
   push:
-    branches: ["master"]
+    branches:
+      - master
+      - feature/*
+    tags:
+      - v*
   pull_request:
-    branches: ["master"]
+    branches:
+      - master
 
 env:
   CARGO_TERM_COLOR: always
