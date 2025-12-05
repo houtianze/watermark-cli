@@ -18,31 +18,31 @@ jobs:
       - name: Install Rust targets
         run: |
           rustup target add x86_64-pc-windows-gnu
-          rustup target add aarch64-unknown-linux-gnu
+          # rustup target add aarch64-unknown-linux-gnu
 
       - name: Install cross-compilation tools
         run: |
-          sudo dpkg --add-architecture aarch64
+          # sudo dpkg --add-architecture aarch64
           sudo apt-get update
-          sudo apt-get install -y mingw-w64 \
-          gcc-aarch64-linux-gnu \
-          g++-aarch64-linux-gnu \
-          binutils-aarch64-linux-gnu \
-          libc6-dev-arm64-cross \
-          libopenjp2-7-dev \
-          libopenjp2-7-dev:arm64
+          sudo apt-get install -y mingw-w64
+          # gcc-aarch64-linux-gnu \
+          # g++-aarch64-linux-gnu \
+          # binutils-aarch64-linux-gnu \
+          # libc6-dev-arm64-cross \
+          # libopenjp2-7-dev \
+          # libopenjp2-7-dev:arm64
 
       - name: Build Binaries
         run: |
-          cargo build --release --target aarch64-unknown-linux-gnu --features static_ssl
-          cargo build --release --target x86_64-unknown-linux-gnu --features static_ssl
-          cargo build --release --target x86_64-pc-windows-gnu --features static_ssl
+          # cargo build --release --target aarch64-unknown-linux-gnu --features static_ssl
+          cargo build --release --target x86_64-unknown-linux-gnu
+          cargo build --release --target x86_64-pc-windows-gnu
 
       - name: Collect Binaries
         run: |
-          mkdir -p binaries/aarch64
+          # mkdir -p binaries/aarch64
           mkdir -p binaries/x86_64
-          cp target/aarch64-unknown-linux-gnu/release/watermark-cli binaries/aarch64/watermark-cli || echo "Linux aarch64 binary not found"
+          # cp target/aarch64-unknown-linux-gnu/release/watermark-cli binaries/aarch64/watermark-cli || echo "Linux aarch64 binary not found"
           cp target/x86_64-unknown-linux-gnu/release/watermark-cli binaries/x86_64/watermark-cli || echo "Linux x86_64 binary not found"
           cp target/x86_64-pc-windows-gnu/release/watermark-cli.exe binaries/x86_64/watermark-cli.exe || echo "Windows binary not found"
 
