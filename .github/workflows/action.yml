@@ -19,32 +19,26 @@ jobs:
           - os-name: FreeBSD-x86_64
             runs-on: ubuntu-24.04
             target: x86_64-unknown-freebsd
-            command-to-run: pkg install openssl
 
           - os-name: Linux-x86_64
             runs-on: ubuntu-24.04
             target: x86_64-unknown-linux-musl
-            command-to-run: sudo apt-get install libssl-dev pkg-config
 
           - os-name: Linux-aarch64
             runs-on: ubuntu-24.04
             target: aarch64-unknown-linux-musl
-            command-to-run: sudo apt-get install libssl-dev pkg-config
 
           - os-name: Linux-riscv64
             runs-on: ubuntu-24.04
             target: riscv64gc-unknown-linux-gnu
-            command-to-run: sudo apt-get install libssl-dev pkg-config
 
           - os-name: Windows-x86_64
             runs-on: windows-latest
             target: x86_64-pc-windows-msvc
-            command-to-run: choco install openssl
 
           - os-name: macOS-x86_64
             runs-on: macOS-latest
             target: x86_64-apple-darwin
-            command-to-run: brew install openssl
 
           # more targets here ...
 
@@ -52,9 +46,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      # - name: Install dependencies
-      #   run: |
-      #     ${{ matrix.platform.command-to-run }}
       - name: Build binary
         uses: houseabsolute/actions-rust-cross@v1
         with:
@@ -67,6 +58,8 @@ jobs:
         with:
           executable-name: watermark-cli
           target: ${{ matrix.platform.target }}
+#
+#
 # Old acton file ----
 # on:
 #   push:
